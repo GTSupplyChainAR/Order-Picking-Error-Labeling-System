@@ -1,0 +1,62 @@
+[
+  {
+    "subjectId": 1,
+    "methods": [
+      {
+        "methodId": 1,
+        "tasks": [
+          {
+            "taskId": 1,
+            "isTraining": true,
+            "orders": [
+              {
+                "orderId": 1,
+                "sourceBins": [
+                  {
+                    "binTag": "GW0",
+                    "numItems": 1
+                  },
+                  {
+                    "binTag": "TJ0",
+                    "numItems": 1
+                  },
+                  {
+                    "binTag": "TR0",
+                    "numItems": 1
+                  },
+                  {
+                    "binTag": "AL0",
+                    "numItems": 1
+                  }
+                ],
+                "receivingBinTag": "X00"
+              },
+              {
+                "orderId": 2,
+                "sourceBins": [
+                  {
+                    "binTag": "GW0",
+                    "numItems": 1
+                  },
+                  {
+                    "binTag": "TJ0",
+                    "numItems": 2
+                  },
+                  {
+                    "binTag": "TR0",
+                    "numItems": 2
+                  },
+                  {
+                    "binTag": "AL0",
+                    "numItems": 1
+                  }
+                ],
+                "receivingBinTag": "X00"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

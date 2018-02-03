@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+
+{% block container %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <h1>Order Error Labeling&nbsp;<small>Order ID {{ context['order_id'] }}</small></h1>
+                <input type="hidden" id="order-id" value="{{ context['order_id'] }}">
+
+                <hr/>
+
+                <div id="confirmation-messages">
+                    <!-- Confirmations go here... -->
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-6">
+                <h3>Expected Items</h3>
+                <hr/>
+                <div class="row">
+                    {% for expected_item_file_name, expected_count in context['expected_items_file_names_and_counts'] %}
+                        <div class="col-md-4">
+                            <figure class="figure">
+                                <img src="{{ expected_item_file_name }}" class="figure-img img-fluid rounded">
+                                <figcaption class="figure-caption">
+                                    {% for i in expected_count|range %}
+                                        <div class="item-indicator"></div>
+                                    {% endfor %}
+                                <br/>
+                                <hr/>
+                                </figcaption>
+                            </figure>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <h3>Actual Items in Bin</h3>
+                <hr/>
+                <img src="{{ context['captured_order_image_name'] }}" class="img-thumbnail">
+            </div>
+        </div>
+
+        <div class="row align-bottom">
+            <div class="col-md-12">
+                <h3>Are all the Expected items in the Actual bin?</h3>
+                <hr/>
+            </div>
+
+            <div class="col-md-6">
+                <button class="btn btn-success btn-block"
+                    id="button-yes">
+                    All Items Present
+                    <br/>
+                    (keyboard: y)</button>
+            </div>
+
+            <div class="col-md-6">
+                <button class="btn btn-danger btn-block"
+                    id="button-no">
+                    Something is Wrong
+                    <br/>
+                    (keyboard: n)
+                </button>
+            </div>
+        </div>
+    </div>
+
+{% endblock container %}
+
+
+{% block scripts %}
+<script type="text/javascript" src="/static/scripts.js"></script>
+{% endblock scripts %}
