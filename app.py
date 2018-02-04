@@ -71,7 +71,9 @@ def template_range(n: int):
 if __name__ == '__main__':
 
     if len(sys.argv) != 3:
+        print(sys.argv)
         print("python app.py json_input_file_path error_labeling_output_file_path")
+        exit(1)
 
     global manager
     manager = ErrorLabelingManager(
@@ -79,4 +81,8 @@ if __name__ == '__main__':
         error_labelling_output_file_path=sys.argv[2],
     )
 
-    app.run(debug=True)
+    app.run(
+        host='0.0.0.0',
+        port=5000,
+        debug=True
+    )
