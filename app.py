@@ -63,6 +63,7 @@ def submit_error_labeling(order_id):
 def labeling_complete():
     return render_template('labeling-complete.html')
 
+
 @app.template_filter('range')
 def template_range(n: int):
     return list(range(n))

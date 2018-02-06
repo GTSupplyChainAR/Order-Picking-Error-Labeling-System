@@ -5,11 +5,16 @@ import datetime
 
 class Order(object):
 
+    subject_id: int = None
+    task_id: int = None
     order_id: int = None
     source_bins: ['Bin'] = None
     receiving_bin_tag: str = None
 
-    def __init__(self, order_id: int, source_bins: ['Bin'], receiving_bin_tag: str):
+    def __init__(self, subject_id: int, method_id: int, task_id: int, order_id: int, source_bins: ['Bin'], receiving_bin_tag: str):
+        self.subject_id = subject_id
+        self.method_id = method_id
+        self.task_id = task_id
         self.order_id = order_id
         self.source_bins = source_bins
         self.receiving_bin_tag = receiving_bin_tag
@@ -30,23 +35,38 @@ class ErrorLabelingInstanceContext(object):
     Encapsulates all the variables needed for the front-end
     """
 
+    subject_id: int = None
+    method_id: int = None
+    task_id: int = None
     order_id: int = None
+
     captured_order_image_file_name: str = None
     expected_items_file_names_and_counts: [(str, int)] = None
 
     def __init__(self, order: Order):
+        self.subject_id = order.subject_id
+        self.method_id = order.method_id
+        self.task_id = order.task_id
         self.order_id = order.order_id
-        self.captured_order_image_file_name = f"/static/images/orders/order-{self.order_id}-capture.jpg"
+        self.captured_order_image_file_name = \
+            f"/static/images/orders/" \
+            f"Subject{self.subject_id:02d}" \
+            f"-Method{self.method_id:02d}" \
+            f"-Task{self.task_id:02d}" \
+            f"-Order{self.order_id:02d}.jpg"
 
         self.expected_items_file_names_and_counts = []
         for source_bin in order.source_bins:  # type: Bin
             self.expected_items_file_names_and_counts.append((
-                f"/static/images/source-bins/{source_bin.bin_tag}-item.jpg",
+                f"/static/images/source-bins/{source_bin.bin_tag}.jpg",
                 source_bin.number_of_items
             ))
 
     def to_dict(self) -> dict:
         return {
+            'subject_id': self.subject_id,
+            'method_id': self.method_id,
+            'task_id': self.task_id,
             'order_id': self.order_id,
             'captured_order_image_name': self.captured_order_image_file_name,
             'expected_items_file_names_and_counts': self.expected_items_file_names_and_counts,
@@ -78,8 +98,11 @@ class ErrorLabelingManager(object):
         orders = []
 
         for subject_dict in object_graph:
+            subject_id = subject_dict['subjectId']
             for method_dict in subject_dict['methods']:
+                method_id = method_dict['methodId']
                 for task_dict in method_dict['tasks']:
+                    task_id = task_dict['taskId']
                     for order_dict in task_dict['orders']:
 
                         source_bins: [Bin] = []
@@ -91,6 +114,9 @@ class ErrorLabelingManager(object):
                             ))
 
                         orders.append(Order(
+                            subject_id=subject_id,
+                            method_id=method_id,
+                            task_id=task_id,
                             order_id=order_dict['orderId'],
                             source_bins=source_bins,
                             receiving_bin_tag=order_dict['receivingBinTag']
@@ -124,7 +150,9 @@ class ErrorLabelingManager(object):
     def save_error_labeling(self, order_id: int, is_order_correct: bool) -> None:
         order: Order = self.get_order(order_id)
 
+        order_information = ErrorLabelingInstanceContext(order).to_dict()
+        order_information['labelling_time'] = datetime.datetime.utcnow().isoformat()
+        order_information['is_order_correct'] = is_order_correct
+
         with open(self.error_labelling_output_file_path, mode='a') as output_file_pointer:
-            output_file_pointer.write(
-                f"time: {datetime.datetime.utcnow().isoformat()}, order_id: {order.order_id}, is_order_correct: {is_order_correct}\n"
-            )
+            output_file_pointer.write(json.dumps(order_information) + "\n")
