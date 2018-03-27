@@ -8,5 +8,5 @@ services:
     volumes:
       - ./data/:/src/data
     environment:
-      - input_file_path=/src/data/input.json
+      - input_file_path=/src/data/RFID-Study-Task-Generation/output/MASTER/tasks-MASTER-training.json
       - output_file_path=/src/data/output.log
