@@ -33,3 +33,9 @@ python app.py -pp data/RFID-Study-Task-Generation/output/MASTER/tasks-MASTER-tra
 ## Updating RFID pick-paths
 
 When the pick paths are versioned up, you'll want to update the `data/RFID-Study-Task-Generation` `git` submodule.
+
+## Example
+
+Check out what one screen in the application looks like:
+
+![Example](./static/example.png)
