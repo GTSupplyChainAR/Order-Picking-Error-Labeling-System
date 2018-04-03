@@ -2,7 +2,7 @@ import argparse
 import json
 import utils
 from flask import Flask, redirect, render_template, request
-from labeling_system import ErrorLabelingManager, ErrorLabelingInstanceContext, Order
+from labeling_system import ErrorLabelingManager, ErrorLabelingInstanceContext, SubOrder
 
 app = Flask(__name__)
 
@@ -20,47 +20,50 @@ def start_labeling():
     """
     Redirects to page of first order to label
     """
-    order: Order = manager.get_first_order()
-    return redirect(f'/error-labeling/task/{order.task_id}/order/{order.order_id}/')
+    order: SubOrder = manager.get_first_suborder()
+    return redirect(f'/error-labeling/task/{order.task_id}/order/{order.order_id}/rack/{order.rack_name}/')
 
 
-@app.route('/error-labeling/task/<task_id>/order/<order_id>/', methods=['GET'])
-def get_error_labeling_page(task_id, order_id):
+@app.route('/error-labeling/task/<task_id>/order/<order_id>/rack/<rack_name>/', methods=['GET'])
+def get_error_labeling_page(task_id, order_id, rack_name):
     """
     Gets the page for labeling errors for this order
     """
     task_id = int(task_id)
     order_id = int(order_id)
+    rack_name = str(rack_name)
 
-    order_context: ErrorLabelingInstanceContext = manager.get_order_context(task_id, order_id)
+    order_context: ErrorLabelingInstanceContext = manager.get_order_context(task_id, order_id, rack_name)
     return render_template('error-labeling.html', context=order_context.to_dict())
 
 
-@app.route('/api/submit-error-labeling/task/<task_id>/order/<order_id>/', methods=['POST'])
-def submit_error_labeling(task_id, order_id):
+@app.route('/api/submit-error-labeling/task/<task_id>/order/<order_id>/rack/<rack_name>/', methods=['POST'])
+def submit_error_labeling(task_id, order_id, rack_name):
     """
     Submits error labeling and redirects to new page for labeling.
     """
     task_id = int(task_id)
     order_id = int(order_id)
+    rack_name = str(rack_name)
 
     request_data = request.get_json()
     is_order_correct = request_data['isOrderCorrect']
 
-    manager.save_error_labeling(task_id, order_id, is_order_correct)
+    manager.save_error_labeling(task_id, order_id, rack_name, is_order_correct)
 
-    next_task_id_and_order_id = manager.get_next_task_id_and_order_id(task_id, order_id)
+    next_task_id_and_order_id_and_rack_name = manager.get_next_task_id_and_order_id_and_rack_name(task_id, order_id, rack_name)
 
-    if next_task_id_and_order_id is None:
+    if next_task_id_and_order_id_and_rack_name is None:
         return json.dumps({
             'isLabelingComplete': True,
         })
 
-    next_task_id, next_order_id = next_task_id_and_order_id
+    next_task_id, next_order_id, next_rack_name = next_task_id_and_order_id_and_rack_name
     return json.dumps({
         'isLabelingComplete': False,
         'nextTaskId': next_task_id,
-        'nextOrderId': next_order_id
+        'nextOrderId': next_order_id,
+        'nextRackName': next_rack_name,
     })
 
 
