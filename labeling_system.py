@@ -58,14 +58,16 @@ class ErrorLabelingManager(object):
             raise OSError(f"Unable to input JSON file: {pick_paths_file}.")
 
         if not os.path.isfile(output_log_file):
-            raise OSError(f"Output log file must exist: {output_log_file}.")
+            with open(output_log_file, "w+"):
+                # Create the file
+                pass
+
+        self.error_labelling_output_file_path = output_log_file
 
         with open(pick_paths_file, mode='r') as json_file_pointer:
             obj = json.load(json_file_pointer)
             tasks = obj['tasks']
             self.orders = self._get_orders_from_tasks_dict(tasks)
-
-        self.error_labelling_output_file_path = output_log_file
 
     @staticmethod
     def _get_orders_from_tasks_dict(tasks_list: [dict]) -> [Order]:

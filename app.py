@@ -1,5 +1,6 @@
 import argparse
 import json
+import utils
 from flask import Flask, redirect, render_template, request
 from labeling_system import ErrorLabelingManager, ErrorLabelingInstanceContext, Order
 
@@ -75,26 +76,21 @@ def template_range(n: int):
 
 if __name__ == '__main__':
 
-    # Set up the command line argument parser
-    parser = argparse.ArgumentParser(description='Run error labeling system used during order-picking studies.')
-    parser.add_argument('--task-pick-paths', '-pp', type=str,
-                        help='The path to the pick paths JSON file used.')
-    parser.add_argument('--output-log-file', '-o', type=str,
-                        help='The path to the log file where output will be written.')
-
-    # Parse sys.argv or raise an error
-    args = parser.parse_args()
+    task_pick_paths_file_name = utils.choose_pick_path_file()
+    output_log_file_name = utils.choose_output_file()
 
     # Set up the system manager
     global manager
     manager = ErrorLabelingManager(
-        pick_paths_file=args.task_pick_paths,
-        output_log_file=args.output_log_file,
+        pick_paths_file=task_pick_paths_file_name,
+        output_log_file=output_log_file_name,
     )
 
     # Make the app available to the uesr
     app.run(
         host='0.0.0.0',
         port=5000,
-        debug=True
+        debug=True,
+        # Prevent reloading which asks the user for input again
+        use_reloader=False,
     )
