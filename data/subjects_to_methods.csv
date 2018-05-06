@@ -1,0 +1,13 @@
+Subject ID,Method 1,Method 2,Method 3,Method 4
+1,HUD/RFID,Paper/None,Paper/Barcode,Light/Button
+2,Paper/None,HUD/RFID,Light/Button,Paper/Barcode
+3,Paper/Barcode,Light/Button,HUD/RFID,Paper/None
+4,Light/Button,Paper/Barcode,Paper/None,HUD/RFID
+6,HUD/RFID,Paper/Barcode,Light/Button,Paper/None
+5,Paper/None,Light/Button,Paper/Barcode,HUD/RFID
+7,Paper/Barcode,HUD/RFID,Paper/None,Light/Button
+8,Light/Button,Paper/None,HUD/RFID,Paper/Barcode
+9,HUD/RFID,Light/Button,Paper/None,Paper/Barcode
+10,Paper/None,Paper/Barcode,HUD/RFID,Light/Button
+11,Paper/Barcode,Paper/None,Light/Button,HUD/RFID
+12,Light/Button,HUD/RFID,Paper/Barcode,Paper/None

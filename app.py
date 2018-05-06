@@ -2,7 +2,7 @@ import argparse
 import json
 import utils
 from flask import Flask, redirect, render_template, request
-from labeling_system import ErrorLabelingManager, ErrorLabelingInstanceContext, Order
+from labeling_system import ErrorLabelingManager, Order
 
 app = Flask(__name__)
 
@@ -24,43 +24,46 @@ def start_labeling():
     return redirect(f'/error-labeling/task/{order.task_id}/order/{order.order_id}/')
 
 
-@app.route('/error-labeling/task/<task_id>/order/<order_id>/', methods=['GET'])
-def get_error_labeling_page(task_id, order_id):
+@app.route('/error-labeling/subject/<subject_id>/task/<task_id>/order/<order_id>/', methods=['GET'])
+def get_error_labeling_page(subject_id, task_id, order_id):
     """
     Gets the page for labeling errors for this order
     """
+    subject_id = int(subject_id)
     task_id = int(task_id)
     order_id = int(order_id)
 
-    order_context: ErrorLabelingInstanceContext = manager.get_order_context(task_id, order_id)
-    return render_template('error-labeling.html', context=order_context.to_dict())
+    order: Order = manager.get_order(subject_id, task_id, order_id)
+    return render_template('error-labeling.html', context=order.to_dict())
 
 
-@app.route('/api/submit-error-labeling/task/<task_id>/order/<order_id>/', methods=['POST'])
-def submit_error_labeling(task_id, order_id):
+@app.route('/api/submit-error-labeling/subject/<subject_id>/task/<task_id>/order/<order_id>/', methods=['POST'])
+def submit_error_labeling(subject_id, task_id, order_id):
     """
     Submits error labeling and redirects to new page for labeling.
     """
+    subject_id = int(subject_id)
     task_id = int(task_id)
     order_id = int(order_id)
 
     request_data = request.get_json()
     is_order_correct = request_data['isOrderCorrect']
 
-    manager.save_error_labeling(task_id, order_id, is_order_correct)
+    order = manager.get_order(subject_id, task_id, order_id)
+    manager.save_error_labeling(order, is_order_correct)
 
-    next_task_id_and_order_id = manager.get_next_task_id_and_order_id(task_id, order_id)
+    next_order = manager.get_next_order(order)
 
-    if next_task_id_and_order_id is None:
+    if next_order is None:
         return json.dumps({
             'isLabelingComplete': True,
         })
 
-    next_task_id, next_order_id = next_task_id_and_order_id
     return json.dumps({
         'isLabelingComplete': False,
-        'nextTaskId': next_task_id,
-        'nextOrderId': next_order_id
+        'nextSubjectId': next_order.subject_id,
+        'nextTaskId': next_order.task_id,
+        'nextOrderId': next_order.order_id,
     })
 
 
@@ -76,13 +79,13 @@ def template_range(n: int):
 
 if __name__ == '__main__':
 
-    task_pick_paths_file_name = utils.choose_pick_path_file()
+    subjects_file_name = './data/subjects.json'
     output_log_file_name = utils.choose_output_file()
 
     # Set up the system manager
     global manager
     manager = ErrorLabelingManager(
-        pick_paths_file=task_pick_paths_file_name,
+        subjects_file=subjects_file_name,
         output_log_file=output_log_file_name,
     )
 

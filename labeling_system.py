@@ -3,14 +3,6 @@ import os
 import datetime
 
 
-class Order(object):
-    def __init__(self, task_id: int, order_id: int, source_bins: ['Bin'], receiving_bin_tag: str):
-        self.task_id = task_id
-        self.order_id = order_id
-        self.source_bins = source_bins
-        self.receiving_bin_tag = receiving_bin_tag
-
-
 class Bin(object):
     bin_tag: str = None
     number_of_items: str = None
@@ -20,30 +12,67 @@ class Bin(object):
         self.number_of_items = number_of_items
 
 
-class ErrorLabelingInstanceContext(object):
-    """
-    Encapsulates all the variables needed for the front-end
-    """
+class Order(object):
+    def __init__(self,
+                 subject_id: int,
+                 method_number: int,
+                 method_id: str,
+                 task_id: int,
+                 task_number: int,
+                 order_id: int,
+                 source_bins: [Bin],
+                 receiving_bin_tag: str):
+        self.subject_id = subject_id
+        self.method_number = method_number
+        self.method_id = method_id
+        self.task_id = task_id
+        self.task_number = task_number
+        self.order_id = order_id
+        self.source_bins = source_bins
+        self.receiving_bin_tag = receiving_bin_tag
 
-    def __init__(self, order: Order):
-        self.task_id = order.task_id
-        self.order_id = order.order_id
-        self.receiving_bin_tag = order.receiving_bin_tag
+    @property
+    def receiving_bin_image_index_in_task_directory(self):
+        return int(self.receiving_bin_tag[-1]) - 1
 
-        self.expected_items_file_names_and_counts_and_source_bin_tags = []
-        for source_bin in order.source_bins:  # type: Bin
-            self.expected_items_file_names_and_counts_and_source_bin_tags.append((
+    @property
+    def actual_bin_file_path(self):
+        folder_path = os.path.join(
+            '.',
+            'data',
+            'By subject, testing, sorted',
+            f'Subject {self.subject_id:02d}',
+            f'Testing',
+            f'Method {self.method_number} {self.method_id}',
+            f'Task {self.task_number:02d}',
+        )
+
+        files_in_task_image_directory = os.listdir(folder_path)
+        receiving_bin_image_name = files_in_task_image_directory[self.receiving_bin_image_index_in_task_directory]
+
+        return os.path.join(folder_path, receiving_bin_image_name)
+
+    def to_dict(self) -> dict:
+
+        # Create an array to hold the information about the source bins from which we expect to see items
+        expected_items_file_names_and_counts_and_source_bin_tags = []
+        for source_bin in self.source_bins:  # type: Bin
+            expected_items_file_names_and_counts_and_source_bin_tags.append((
                 f"/static/images/source-bins/{source_bin.bin_tag}.jpg",
                 source_bin.number_of_items,
                 source_bin.bin_tag,
             ))
 
-    def to_dict(self) -> dict:
         return {
+            'subject_id': self.subject_id,
+            'method_id': self.method_id,
+            'method_number': self.method_number,
             'task_id': self.task_id,
+            'task_number': self.task_number,
             'order_id': self.order_id,
+            'actual_bin_file_path': self.actual_bin_file_path,
             'receiving_bin_tag': self.receiving_bin_tag,
-            'expected_items_file_names_and_counts_and_source_bin_tags': self.expected_items_file_names_and_counts_and_source_bin_tags,
+            'expected_items_file_names_and_counts_and_source_bin_tags': expected_items_file_names_and_counts_and_source_bin_tags,
         }
 
 
@@ -52,10 +81,10 @@ class ErrorLabelingManager(object):
 
     error_labelling_output_file_path: str = None
 
-    def __init__(self, pick_paths_file: str, output_log_file: str):
+    def __init__(self, subjects_file: str, output_log_file: str):
 
-        if not os.path.isfile(pick_paths_file):
-            raise OSError(f"Unable to input JSON file: {pick_paths_file}.")
+        if not os.path.isfile(subjects_file):
+            raise OSError(f"Unable to input JSON file: {subjects_file}.")
 
         if not os.path.isfile(output_log_file):
             with open(output_log_file, "w+"):
@@ -64,64 +93,75 @@ class ErrorLabelingManager(object):
 
         self.error_labelling_output_file_path = output_log_file
 
-        with open(pick_paths_file, mode='r') as json_file_pointer:
+        with open(subjects_file, mode='r') as json_file_pointer:
             obj = json.load(json_file_pointer)
-            tasks = obj['tasks']
-            self.orders = self._get_orders_from_tasks_dict(tasks)
+            subjects_list = obj['subjects']
+            self.orders = self._get_orders_from_subjects_list(subjects_list)
 
-    @staticmethod
-    def _get_orders_from_tasks_dict(tasks_list: [dict]) -> [Order]:
+    def _get_orders_from_subjects_list(self, subjects_list: [dict]) -> [Order]:
         orders = []
 
-        for task_dict in tasks_list:
-            task_id = task_dict['taskId']
-            for order_dict in task_dict['orders']:
+        for subject_dict in subjects_list:
+            subject_id = subject_dict['subjectId']
 
-                source_bins: [Bin] = []
+            for method_i, method_dict in enumerate(subject_dict['methods']):
+                method_number = method_i + 1
 
-                for bin_dict in order_dict['sourceBins']:
-                    source_bins.append(Bin(
-                        bin_tag=bin_dict['binTag'],
-                        number_of_items=bin_dict['numItems'],
-                    ))
+                method_id = method_dict['methodId']
 
-                orders.append(Order(
-                    task_id=task_id,
-                    order_id=order_dict['orderId'],
-                    source_bins=source_bins,
-                    receiving_bin_tag=order_dict['receivingBinTag']
-                ))
+                for task_i, task_dict in enumerate(subject_dict['tasks']):
+                    task_number = task_i + 1
+
+                    task_id = task_dict['taskId']
+                    for order_dict in task_dict['orders']:
+
+                        source_bins: [Bin] = []
+                        for bin_dict in order_dict['sourceBins']:
+                            source_bins.append(Bin(
+                                bin_tag=bin_dict['binTag'],
+                                number_of_items=bin_dict['numItems'],
+                            ))
+
+                        orders.append(Order(
+                            subject_id=subject_id,
+                            method_id=method_id,
+                            method_number=method_number,
+                            task_id=task_id,
+                            task_number=task_number,
+                            order_id=order_dict['orderId'],
+                            source_bins=source_bins,
+                            receiving_bin_tag=order_dict['receivingBinTag']
+                        ))
 
         return orders
 
     def get_first_order(self) -> Order:
         return self.orders[0]
 
-    def get_order(self, task_id, order_id: int) -> Order:
+    def get_order(self, subject_id: int, task_id, order_id: int) -> Order:
         for order in self.orders:
-            if order.task_id == task_id and order.order_id == order_id:
+            if order.subject_id == subject_id \
+                    and order.task_id == task_id \
+                    and order.order_id == order_id:
                 return order
 
         raise ValueError(f"Couldn't find order with Task ID {task_id} and Order ID {order_id}.")
 
-    def get_order_context(self, task_id: int, order_id: int) -> ErrorLabelingInstanceContext:
-        order = self.get_order(task_id, order_id)
-        return ErrorLabelingInstanceContext(order)
-
-    def get_next_task_id_and_order_id(self, current_task_id: int, current_order_id: int) -> None or (int, int):
+    def get_next_order(self, current_order: Order) -> None or Order:
         for i, order in enumerate(self.orders):
 
-            if order.task_id == current_task_id and order.order_id == current_order_id:
+            if order.subject_id == current_order.subject_id \
+                    and order.task_id == current_order.task_id \
+                    and order.order_id == current_order.order_id:
                 # Returning None indicates that current_order_id is the last element: i == len(self.orders)
                 if i + 1 >= len(self.orders):
                     return None
                 next_order: Order = self.orders[i + 1]
-                return next_order.task_id, next_order.order_id
+                return next_order
 
-        raise IndexError(f"Cannot find order with Task ID {current_task_id} and Order ID {current_order_id}")
+        raise ValueError()
 
-    def save_error_labeling(self, task_id: int, order_id: int, is_order_correct: bool) -> None:
-        order: Order = self.get_order(task_id, order_id)
+    def save_error_labeling(self, order: Order, is_order_correct: bool) -> None:
 
         order_information = {
             'taskId': order.task_id,

@@ -5,7 +5,7 @@
     <div class="container">
         <div class="row">
             <div class="col">
-                <h1>Order Error Labeling&nbsp;<small>Task {{ context['task_id'] }} - Order {{ context['order_id'] }}</small></h1>
+                <h1>Order Error Labeling&nbsp;<small>Subject {{ context['subject_id'] }} - Method #{{ context['method_number'] }} ({{ context['method_id'] }}) - Task {{ context['task_id'] }} - Order {{ context['order_id'] }}</small></h1>
 
                 <!-- Used by JavaScript to interactively get next order. -->
                 <input type="hidden" id="task-id" value="{{ context['task_id'] }}">
@@ -16,7 +16,7 @@
         </div>
 
         <div class="row">
-            <div class="col-md-6 offset-md-3">
+            <div class="col-md-6">
                 <h3>Expected Items in <strong>{{ context['receiving_bin_tag'] }}</strong> (receive bin)</h3>
                 <hr/>
                 <div class="row">
@@ -37,6 +37,12 @@
                         </div>
                     {% endfor %}
                 </div>
+            </div>
+
+            <div class="col-md-6">
+                <h3>Actual bin</h3>
+                <hr/>
+                <img src="{{ context['actual_bin_file_path'] }}" class="figure-img img-fluid rounded">
             </div>
 
             <div class="col-md-3">
