@@ -1,10 +1,10 @@
 $(document).ready(function () {
 
-    function submitErrorLabeling(taskId, orderId, rackName, isOrderCorrect) {
-        console.log(taskId, orderId, rackName, isOrderCorrect);
+    function submitErrorLabeling(taskId, orderId, isOrderCorrect) {
+        console.log(taskId, orderId, isOrderCorrect);
 
         return $.ajax({
-            url: '/api/submit-error-labeling/task/' + taskId + '/order/' + orderId + '/rack/' + rackName + '/',
+            url: '/api/submit-error-labeling/task/' + taskId + '/order/' + orderId + '/',
             method: 'POST',
             data: JSON.stringify({
                 isOrderCorrect: isOrderCorrect,
@@ -15,7 +15,7 @@ $(document).ready(function () {
             if (data.isLabelingComplete) {
                 handleLabelingComplete();
             } else {
-                handleSuccessAndMoveForward(data.nextTaskId, data.nextOrderId, data.nextRackName);
+                handleSuccessAndMoveForward(data.nextTaskId, data.nextOrderId);
             }
         }).fail(handleServerError);
     }
@@ -32,15 +32,15 @@ $(document).ready(function () {
         }, 500)
     }
 
-    function handleSuccessAndMoveForward(nextTaskId, nextOrderId, nextRackName) {
+    function handleSuccessAndMoveForward(nextTaskId, nextOrderId) {
         $("<div/>", {
             class: 'alert alert-success',
             role: 'alert',
-            text: 'Saved information! Moving to Task ID ' + nextTaskId + ' and Order ID ' + nextOrderId + ' now with rack ' + nextRackName + '.',
+            text: 'Saved information! Moving to Task ID ' + nextTaskId + ' and Order ID ' + nextOrderId + ' now.',
         }).appendTo("#confirmation-messages");
 
         setTimeout(function () {
-            window.location = '/error-labeling/task/' + nextTaskId + '/order/' + nextOrderId + '/rack/' + nextRackName;
+            window.location = '/error-labeling/task/' + nextTaskId + '/order/' + nextOrderId + '/';
         }, 1000);
     }
 
@@ -54,21 +54,20 @@ $(document).ready(function () {
 
     var taskId = $("#task-id").val();
     var orderId = $("#order-id").val();
-    var rackName = $("#rack-name").val();
 
     $("#button-yes").click(function () {
-        submitErrorLabeling(taskId, orderId, rackName, /* isOrderCorrect: */ true);
+        submitErrorLabeling(taskId, orderId, /* isOrderCorrect: */ true);
     });
 
     $("#button-no").click(function () {
-        submitErrorLabeling(taskId, orderId, rackName, /* isOrderCorrect: */ false);
+        submitErrorLabeling(taskId, orderId, /* isOrderCorrect: */ false);
     });
 
     $(document).keypress(function (e) {
         if (e.which === 121) {  // 'Y' was pressed
-            submitErrorLabeling(taskId, orderId, rackName, true);
+            submitErrorLabeling(taskId, orderId, true);
         } else if (e.which === 110) {  // 'N' was pressed
-            submitErrorLabeling(taskId, orderId, rackName, false);
+            submitErrorLabeling(taskId, orderId, false);
         }
     });
 

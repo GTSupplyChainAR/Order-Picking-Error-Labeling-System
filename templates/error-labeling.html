@@ -5,12 +5,11 @@
     <div class="container">
         <div class="row">
             <div class="col">
-                <h1>Order Error Labeling&nbsp;<small>Task {{ context['task_id'] }} - Order {{ context['order_id'] }} - Rack {{ context['rack_name'] }}</small></h1>
+                <h1>Order Error Labeling&nbsp;<small>Task {{ context['task_id'] }} - Order {{ context['order_id'] }}</small></h1>
 
                 <!-- Used by JavaScript to interactively get next order. -->
                 <input type="hidden" id="task-id" value="{{ context['task_id'] }}">
                 <input type="hidden" id="order-id" value="{{ context['order_id'] }}">
-                <input type="hidden" id="rack-name" value="{{ context['rack_name'] }}">
 
                 <hr/>
             </div>
