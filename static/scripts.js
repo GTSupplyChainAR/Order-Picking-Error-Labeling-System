@@ -1,10 +1,15 @@
 $(document).ready(function () {
 
-    function submitErrorLabeling(taskId, orderId, isOrderCorrect) {
-        console.log(taskId, orderId, isOrderCorrect);
+    var subjectId = $("#subject-id").val();
+    var methodId = $("#method-id").val();
+    var taskId = $("#task-id").val();
+    var orderId = $("#order-id").val();
+
+    function submitErrorLabeling(isOrderCorrect) {
+        console.log(isOrderCorrect);
 
         return $.ajax({
-            url: '/api/submit-error-labeling/task/' + taskId + '/order/' + orderId + '/',
+            url: '/api/submit-error-labeling/subject/' + subjectId + '/method/' + methodId + '/task/' + taskId + '/order/' + orderId + '/',
             method: 'POST',
             data: JSON.stringify({
                 isOrderCorrect: isOrderCorrect,
@@ -15,7 +20,7 @@ $(document).ready(function () {
             if (data.isLabelingComplete) {
                 handleLabelingComplete();
             } else {
-                handleSuccessAndMoveForward(data.nextTaskId, data.nextOrderId);
+                handleSuccessAndMoveForward(data.nextSubjectId, data.nextMethodId, data.nextTaskId, data.nextOrderId);
             }
         }).fail(handleServerError);
     }
@@ -32,15 +37,15 @@ $(document).ready(function () {
         }, 500)
     }
 
-    function handleSuccessAndMoveForward(nextTaskId, nextOrderId) {
+    function handleSuccessAndMoveForward(nextSubjectId, nextMethodId, nextTaskId, nextOrderId) {
         $("<div/>", {
             class: 'alert alert-success',
             role: 'alert',
-            text: 'Saved information! Moving to Task ID ' + nextTaskId + ' and Order ID ' + nextOrderId + ' now.',
+            text: 'Saved information! Moving on now.',
         }).appendTo("#confirmation-messages");
 
         setTimeout(function () {
-            window.location = '/error-labeling/task/' + nextTaskId + '/order/' + nextOrderId + '/';
+            window.location = '/error-labeling/subject/' + nextSubjectId + '/method/' + nextMethodId +'/task/' + nextTaskId + '/order/' + nextOrderId + '/';
         }, 1000);
     }
 
@@ -52,22 +57,19 @@ $(document).ready(function () {
         }).appendTo("#confirmation-messages");
     }
 
-    var taskId = $("#task-id").val();
-    var orderId = $("#order-id").val();
-
     $("#button-yes").click(function () {
-        submitErrorLabeling(taskId, orderId, /* isOrderCorrect: */ true);
+        submitErrorLabeling(/* isOrderCorrect: */ true);
     });
 
     $("#button-no").click(function () {
-        submitErrorLabeling(taskId, orderId, /* isOrderCorrect: */ false);
+        submitErrorLabeling(/* isOrderCorrect: */ false);
     });
 
     $(document).keypress(function (e) {
         if (e.which === 121) {  // 'Y' was pressed
-            submitErrorLabeling(taskId, orderId, true);
+            submitErrorLabeling(/* isOrderCorrect: */ true);
         } else if (e.which === 110) {  // 'N' was pressed
-            submitErrorLabeling(taskId, orderId, false);
+            submitErrorLabeling(/* isOrderCorrect: */ false);
         }
     });
 

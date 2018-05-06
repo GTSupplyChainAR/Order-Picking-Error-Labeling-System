@@ -24,7 +24,7 @@ class Order(object):
                  receiving_bin_tag: str):
         self.subject_id = subject_id
         self.method_number = method_number
-        self.method_id = method_id
+        self.method_id = method_id.replace('/', '-')
         self.task_id = task_id
         self.task_number = task_number
         self.order_id = order_id
@@ -38,19 +38,22 @@ class Order(object):
     @property
     def actual_bin_file_path(self):
         folder_path = os.path.join(
-            '.',
-            'data',
+            'static',
+            'images',
             'By subject, testing, sorted',
             f'Subject {self.subject_id:02d}',
             f'Testing',
-            f'Method {self.method_number} {self.method_id}',
-            f'Task {self.task_number:02d}',
+            f'Method n{self.method_number} ({self.method_id})',
+            f'Task n{self.task_number:02d}',
         )
 
-        files_in_task_image_directory = os.listdir(folder_path)
+        files_in_task_image_directory = os.listdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), folder_path))
+        files_in_task_image_directory = [file for file in files_in_task_image_directory if file.endswith('JPG')]
+        files_in_task_image_directory = sorted(files_in_task_image_directory)
+
         receiving_bin_image_name = files_in_task_image_directory[self.receiving_bin_image_index_in_task_directory]
 
-        return os.path.join(folder_path, receiving_bin_image_name)
+        return '/' + os.path.join(folder_path, receiving_bin_image_name)
 
     def to_dict(self) -> dict:
 
@@ -109,7 +112,7 @@ class ErrorLabelingManager(object):
 
                 method_id = method_dict['methodId']
 
-                for task_i, task_dict in enumerate(subject_dict['tasks']):
+                for task_i, task_dict in enumerate(method_dict['tasks']):
                     task_number = task_i + 1
 
                     task_id = task_dict['taskId']
@@ -138,19 +141,21 @@ class ErrorLabelingManager(object):
     def get_first_order(self) -> Order:
         return self.orders[0]
 
-    def get_order(self, subject_id: int, task_id, order_id: int) -> Order:
+    def get_order(self, subject_id: int, method_id: str, task_id, order_id: int) -> Order:
         for order in self.orders:
             if order.subject_id == subject_id \
+                    and order.method_id == method_id \
                     and order.task_id == task_id \
                     and order.order_id == order_id:
                 return order
 
-        raise ValueError(f"Couldn't find order with Task ID {task_id} and Order ID {order_id}.")
+        raise ValueError(f"Couldn't find order")
 
     def get_next_order(self, current_order: Order) -> None or Order:
         for i, order in enumerate(self.orders):
 
             if order.subject_id == current_order.subject_id \
+                    and order.method_id == current_order.method_id \
                     and order.task_id == current_order.task_id \
                     and order.order_id == current_order.order_id:
                 # Returning None indicates that current_order_id is the last element: i == len(self.orders)
@@ -164,7 +169,9 @@ class ErrorLabelingManager(object):
     def save_error_labeling(self, order: Order, is_order_correct: bool) -> None:
 
         order_information = {
+            'subjectId': order.subject_id,
             'taskId': order.task_id,
+            'methodId': order.method_id,
             'orderId': order.order_id,
             'labelling_time': datetime.datetime.utcnow().isoformat(),
             'is_order_correct': is_order_correct,

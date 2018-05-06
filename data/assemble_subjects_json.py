@@ -46,4 +46,4 @@ for subject_id in range(1, 13):
     })
 
 with open('subjects.json', mode='w+') as f:
-    json.dump(subjects, f, indent=4)
+    json.dump({'subjects': subjects}, f, indent=4)
